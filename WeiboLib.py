@@ -82,8 +82,8 @@ class WeiboLib:
             print 'Post End'
 
 if __name__ == "__main__":
-    user = "2509335746@qq.com"
-    passwd = "lixindong14tc"
+    user = "xxx@qq.com"
+    passwd = "xxxxxx"
 
     from selenium import webdriver
     driver = webdriver.Chrome()

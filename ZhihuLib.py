@@ -2,6 +2,7 @@
 #coding = utf-8
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
+import os
 
 from WebDriverLib import WebDriverLib
 
@@ -46,7 +47,11 @@ class ZhihuLib:
             last_li = li_list[len(li_list)-1]
             zan = last_li.find_element(By.XPATH,
                                        ".//a[@class='zm-item-vote-count hidden-expanded js-expand js-vote-count']")
-            zan_count = int(zan.text)
+            print 'zan count html:', zan.get_attribute('innerHTML')
+            if zan.text == "":
+                zan_count = int(zan.get_attribute('innerHTML'))
+            else:
+                zan_count = int(zan.text)
         except Exception,e:
             print 'get last zan count error', e
         finally:
@@ -58,7 +63,11 @@ class ZhihuLib:
         try:
             zan = li.find_element(By.XPATH,
                                        ".//a[@class='zm-item-vote-count hidden-expanded js-expand js-vote-count']")
-            zan_count = int(zan.text)
+            print 'zan count html:', zan.get_attribute('innerHTML')
+            if zan.text == "":
+                zan_count = int(zan.get_attribute('innerHTML'))
+            else:
+                zan_count = int(zan.text)
         except Exception, e:
             print 'get zan count error', e
         finally:
@@ -106,158 +115,199 @@ class ZhihuLib:
         print 'question list', self.question_list
 
 
-def take_screenshot(url, save_fn="/tmp/capture.png"):
-    import time
-    from selenium import webdriver
-    browser = webdriver.Chrome() # Get local session of firefox
-    browser.set_window_size(1200, 900)
-    browser.get(url) # Load page
-    browser.execute_script("""
-        (function () {document.write("<script src='https://github.com/niklasvh/html2canvas/releases/download/0.5.0-alpha1/html2canvas.js'><\/script>");
-            //html2canvas(document.body.getElementsByClassName('codehilite')[0], {
-            //onrendered: function(canvas) {
-              //document.body.appendChild(canvas);
-              //}
-            //});
-        })();
-    """)
-
-    # for i in xrange(30):
-    #     if "scroll-done" in browser.title:
-    #         break
-    #     time.sleep(10)
-
-    # browser.save_screenshot(save_fn)
-    # browser.close()
+    def click_show_more_on_item(self, item):
+        try:
+            from selenium.webdriver import ActionChains
+            show_more_btn = item.find_element(By.XPATH, ".//a[@class='toggle-expand inline']")
+            ActionChains(self.driver).move_to_element(show_more_btn).click().perform()
+            # show_more_btn.click()
+        except Exception,e:
+            print 'show load more on item error', e
+        finally:
+            print 'show more on item finished'
 
 
-def create_element(driver, element):
-    # location = li.location
-    # size = li.size
-
-    from selenium import webdriver
-    from PIL import Image
-    import time
-    # time.sleep(10)
-
-    # fox = webdriver.Chrome()
-    # fox.get('http://stackoverflow.com/')
-
-    # now that we have the preliminary stuff out of the way time to get that image :D
-    # element = fox.find_element_by_id('hlogo') # find part of the page you want image of
-
-    driver.execute_script("""
-        (function () {
-            var y = 0;
-            var step = 100;
-            window.scroll(0, 0);
-
-            function f() {
-                if (y < document.body.scrollHeight) {
-                    y += step;
-                    window.scroll(0, y);
-                    setTimeout(f, 100);
-                } else {
-                    window.scroll(0, 0);
-                    document.title += "scroll-done";
-                }
-            }
-
-            setTimeout(f, 1000);
-        })();
-    """)
-
-    for i in xrange(30):
-        if "scroll-done" in driver.title:
-            break
-        time.sleep(10)
-
-    print 'scroll to element'
-    driver.execute_script("arguments[0].scrollIntoView();", element)
-
-    driver.save_screenshot('screenshot.png') # saves screenshot of entire page
-    # driver.quit()
-
-    im = Image.open('screenshot.png') # uses PIL library to open image in memory
-    location = element.location
-    size = element.size
-
-    # left = location['x']
-    # top = location['y']
-    # right = location['x'] + size['width']
-    # bottom = location['y'] + size['height']
-    # driver.set_window_size(size['width'], size['height'])
-    # driver.set_window_position(location['x'], location['y'])
-    left = location['x']
-    top = 0
-    right = location['x'] + size['width']
-    bottom = size['height']
-
-    # driver.save_screenshot('screenshot.png') # saves screenshot of entire page
-    im = im.crop((left, top, right, bottom)) # defines crop points
-    im.save('screenshot.png') # saves new cropped image
-    print 'scroll by 0,500'
-    driver.execute_script("scrollBy(0,500);")
-    driver.save_screenshot('screenshot1.png') # saves screenshot of entire page
-
-    time.sleep(30)
-
-
-def click_show_more_on_item(item):
+def click_hide_more(item):
     try:
-        show_more_btn = item.find_element(By.XPATH, ".//a[@class='toggle-expand inline']")
-        show_more_btn.click()
+        # hide_more_btn = driver.find_element(By.XPATH,
+        #                                     ".//div[@class='action-item item-collapse js-collapse is-sticky'] or button[@class='action-item item-collapse js-collapse']")
+        hide_more_btn = item.find_element(By.XPATH, ".//button[@class='action-item item-collapse js-collapse' or @class='action-item item-collapse js-collapse is-sticky']")
+        hide_more_btn.click()
     except Exception,e:
-        print 'show load more on item error', e
+        print 'hide more on item error', e
     finally:
-        print 'show more on item finished'
+        print 'hide more on item finished'
 
 
-def test_screen_shot():
-    # take_screenshot('http://codingpy.com/article/take-screenshot-of-web-page-using-selenium/')
-    # take_screenshot('http://baidu.com')
-    # exit()
-    # import time
-    # time.sleep(300)
+def save_article_info_phantomjs(driver, post_item, dir_path):
+    import os
+    token = post_item.find_element(By.XPATH, ".//meta[@itemprop='post-url-token']").get_attribute('content')
+    path = dir_path+'/'+token
+    if not os.path.isdir(path):
+        os.mkdir(path)
+
+    webdriverlib = WebDriverLib(driver)
+    # webdriverlib.take_screenshot_on_item(driver, post_item, path)
+    # webdriverlib.wait_for_img_loading_finished(driver)
+    webdriverlib.take_screenshot_on_element(driver, post_item, path)
+
+
+def save_article_info_chrome(driver, post_item, dir_path):
+    import os
+    token = post_item.find_element(By.XPATH, ".//meta[@itemprop='post-url-token']").get_attribute('content')
+    title = post_item.find_element(By.XPATH, ".//div[@class='title']/a").text
+    summary = post_item.find_element(By.XPATH, ".//div[@class='summary hidden-expanded']").text
+    print token,title,summary
+
+    path = dir_path+'/'+token
+    if not os.path.isdir(path):
+        os.mkdir(path)
+
+    save_to_file(token, title, summary, path)
+
+    webdriverlib = WebDriverLib(driver)
+    webdriverlib.take_screenshot_on_item(driver, post_item, path)
+    # webdriverlib.wait_for_img_loading_finished(driver)
+    # webdriverlib.take_screenshot_on_element(driver, post_item, path)
+
+
+def save_to_file(token, title, summary, path):
+    f = open(path+'/title', 'w')
+    f.write(encode_to_gb2312(title))
+    f.close()
+
+    f = open(path+'/summary', 'w')
+    f.write(encode_to_gb2312(summary))
+    f.close()
+
+    f = open(path+'/token', 'w')
+    f.write(encode_to_gb2312(token))
+    f.close()
+
+
+def encode_to_gb2312(text):
+    if isinstance(text, unicode):
+        text = text.encode('gb2312')
+    else:
+        text = text.decode('utf-8').encode('gb2312')
+    return text
+
+def screenshot(raw, item, dir_path, name='screenshot.png'):
+    token = item.find_element(By.XPATH, ".//meta[@itemprop='post-url-token']").get_attribute('content')
+    path = dir_path+'/'+token
+    if not os.path.isdir(path):
+        os.mkdir(path)
+
+    left = item.location['x']
+    top = item.location['y']
+    right = left + item.size['width']
+    bottom = top + item.size['height']
+    raw.crop((left, top, right, bottom)).save(path+'/'+name)
+    print 'save '+path+'/'+name
+
+
+def save_screenshot_chrome():
+    import os
+    dir_path = "/tmp/zhihu"
+    if not os.path.isdir(dir_path):
+        os.mkdir(dir_path)
 
     from selenium import webdriver
+    # driver = webdriver.Chrome()
     driver = webdriver.Chrome()
-    # driver = webdriver.Remote()
-    # driver.set_window_size(800, 10000)
     zhihu = ZhihuLib(driver)
     driver.get(zhihu.get_search_url('pokemongo'))
 
     count = 100
-    # search keyword
-    # zhihu.load_more_until_zan(count)
-    # while last li zan > 100
-    #   load more
-    # li_list = zhihu.get_li_list()
-    # print 'load more End, len is ',str(len(li_list))
-    # foreach li
-    # if zan > 100
-    #    if article:
-    #       put in article list
-    #    if question:
-    #       put int question list
-    # save list to local
+    zhihu.load_more_until_zan(count)
     zhihu.save_article_question_list(count)
-    # item = zhihu.article_list[len(zhihu.article_list)-1]
-    item = zhihu.article_list[0]
-    click_show_more_on_item(item)
-    # create_element(driver, item)
+
+    for item in zhihu.article_list:
+        # print 'before: ',item.location['x'],item.location['y'],item.size['width'],item.size['height']
+        zhihu.click_show_more_on_item(item)
+        # print 'mid: ',item.location['x'],item.location['y'],item.size['width'],item.size['height']
+        save_article_info_chrome(driver, item, dir_path)
+        # print 'after: ',item.location['x'],item.location['y'],item.size['width'],item.size['height']
+
+
+def test_screen_shot():
+    import os
+    dir_path = "/tmp/zhihu"
+    if not os.path.isdir(dir_path):
+        os.mkdir(dir_path)
+
+    from selenium import webdriver
+    # driver = webdriver.Chrome()
+    driver = webdriver.PhantomJS()
+    zhihu = ZhihuLib(driver)
+    driver.get(zhihu.get_search_url('pokemongo'))
+
+    count = 100
+    zhihu.load_more_until_zan(count)
+    zhihu.save_article_question_list(count)
+
+
+    for item in zhihu.article_list:
+        # print 'before: ',item.location['x'],item.location['y'],item.size['width'],item.size['height']
+        zhihu.click_show_more_on_item(item)
+        # print 'mid: ',item.location['x'],item.location['y'],item.size['width'],item.size['height']
+        # print 'after: ',item.location['x'],item.location['y'],item.size['width'],item.size['height']
     webdriverlib = WebDriverLib(driver)
-    webdriverlib.take_screenshot_on_item(driver, item)
-    # output
-    #   screenshot save to local
-    # zhihu.article_list[0].save_screenshot('/tmp/s2.png')
-    # create_element(zhihu.article_list[0])
-    # li = zhihu.article_list[0]
-    # li.screenshot("/tmp/s2.png")
-    # driver.save_screenshot('/tmp/s.png')
+    webdriverlib.wait_for_img_loading_finished(driver,60)
+
+    driver.save_screenshot('/tmp/zhihu/raw.png')
+
+    from PIL import Image
+
+    raw = Image.open('/tmp/zhihu/raw.png')
+
+    for item in zhihu.article_list:
+        # save_article_info(driver, item, dir_path)
+        screenshot(raw, item, dir_path)
+
+
+def test():
+    import os
+    dir_path = "/tmp/zhihu"
+    if not os.path.isdir(dir_path):
+        os.mkdir(dir_path)
+
+    from selenium import webdriver
+    # driver = webdriver.Chrome()
+    driver = webdriver.Chrome()
+    zhihu = ZhihuLib(driver)
+    driver.get(zhihu.get_search_url('pokemongo'))
+
+    count = 100
+    zhihu.save_article_question_list(count)
+    save_article_info_chrome(driver, zhihu.article_list[0], dir_path)
 
 if __name__ == '__main__':
-    test_screen_shot()
+    save_screenshot_chrome()
+    # test()
+    # from selenium import webdriver
+    #
+    # driver = webdriver.PhantomJS()
+    # zhihu = ZhihuLib(driver)
+    # driver.get(zhihu.get_search_url('pokemongo'))
+    # driver.save_screenshot('/tmp/raw.png')
+    #
+    # from PIL import Image
+    # im = Image.open('/tmp/raw.png')
+    # im.crop((0, 0, 300, 500)).save('/tmp/rawcrop.png')
+    # im.crop((150, 0, 300, 500)).save('/tmp/rawcrop2.png')
+
+
     # from selenium import webdriver
     # driver = webdriver.Chrome()
-    # WebDriverLib.take_screenshot_on_item(driver=driver, )
+    # driver.get('https://www.douban.com/group/topic/6747157/')
+    # body = driver.find_element_by_class_name('mod')
+    # WebDriverLib(driver).take_screenshot_on_item(driver, body, '/tmp/douban')
+    #
+    # driver.get('http://www.baidu.com/')
+    # lg = driver.find_element_by_id('lg')
+    # WebDriverLib(driver).take_screenshot_on_item(driver, lg, '/tmp/baidu')
+    #
+    # driver.get('https://www.zhihu.com/search?type=content&q=pokemongo/')
+    # lg = driver.find_element_by_xpath("//div[@class='zg-wrap zu-main clearfix']")
+    # WebDriverLib(driver).take_screenshot_on_item(driver, lg, '/tmp/zhihu1')

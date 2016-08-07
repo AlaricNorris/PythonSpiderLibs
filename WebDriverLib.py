@@ -95,7 +95,7 @@ class WebDriverLib:
                 # driver.save_screenshot(filename+'.raw')
                 remain_height -= step
                 if remain_height <= 0:
-                    driver.save_screenshot(filename+'.raw') # saves screenshot of entire page
+                    # driver.save_screenshot(filename+'.raw') # saves screenshot of entire page
                     scop_to(filename, left, window_height-step, right, window_height)
                     break
                 else:

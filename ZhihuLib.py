@@ -156,7 +156,7 @@ def save_article_info_chrome(driver, post_item, dir_path):
     import os
     token = post_item.find_element(By.XPATH, ".//meta[@itemprop='post-url-token']").get_attribute('content')
     title = post_item.find_element(By.XPATH, ".//div[@class='title']/a").text
-    summary = post_item.find_element(By.XPATH, ".//div[@class='summary hidden-expanded']").text
+    summary = post_item.find_element(By.XPATH, ".//div[contains(@class,'summary')]").get_attribute('innerHTML')
     print token,title,summary
 
     path = dir_path+'/'+token
@@ -186,10 +186,14 @@ def save_to_file(token, title, summary, path):
 
 
 def encode_to_gb2312(text):
-    if isinstance(text, unicode):
-        text = text.encode('gb2312')
-    else:
-        text = text.decode('utf-8').encode('gb2312')
+    try:
+        if isinstance(text, unicode):
+            text = text.encode('gb2312')
+        else:
+            text = text.decode('utf-8').encode('gb2312')
+    except Exception, e:
+        print 'encode error', e
+        text = ""
     return text
 
 def screenshot(raw, item, dir_path, name='screenshot.png'):
@@ -280,7 +284,9 @@ def test():
 
     count = 100
     zhihu.save_article_question_list(count)
+    zhihu.click_show_more_on_item(zhihu.article_list[0])
     save_article_info_chrome(driver, zhihu.article_list[0], dir_path)
+    save_article_info_chrome(driver, zhihu.article_list[1], dir_path)
 
 if __name__ == '__main__':
     save_screenshot_chrome()

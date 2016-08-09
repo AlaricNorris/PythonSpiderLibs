@@ -1,5 +1,5 @@
 #!/usr/local/bin/python
-#coding = utf-8
+# coding: utf-8
 import os
 
 from selenium.webdriver.support import expected_conditions as EC

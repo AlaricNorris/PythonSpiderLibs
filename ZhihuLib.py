@@ -1,5 +1,6 @@
 #!/usr/local/bin/python
-#coding = utf-8
+# coding: utf-8
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 import os
@@ -173,16 +174,27 @@ def save_article_info_chrome(driver, post_item, dir_path):
 
 def save_to_file(token, title, summary, path):
     f = open(path+'/title', 'w')
-    f.write(encode_to_gb2312(title))
+    f.write(encode_to_utf8(title))
     f.close()
 
     f = open(path+'/summary', 'w')
-    f.write(encode_to_gb2312(summary))
+    f.write(encode_to_utf8(summary))
     f.close()
 
     f = open(path+'/token', 'w')
-    f.write(encode_to_gb2312(token))
+    f.write(encode_to_utf8(token))
     f.close()
+
+
+def encode_to_utf8(text):
+    try:
+        if isinstance(text, unicode):
+            text = text.encode('utf-8')
+            print text,'is encoded to utf-8'
+    except:
+        text = ''
+    finally:
+        return text
 
 
 def encode_to_gb2312(text):
@@ -195,6 +207,7 @@ def encode_to_gb2312(text):
         print 'encode error', e
         text = ""
     return text
+
 
 def screenshot(raw, item, dir_path, name='screenshot.png'):
     token = item.find_element(By.XPATH, ".//meta[@itemprop='post-url-token']").get_attribute('content')

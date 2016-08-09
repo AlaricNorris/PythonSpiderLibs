@@ -1,5 +1,6 @@
 #!/usr/local/bin/python
-#coding = utf-8
+# coding: utf-8
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 import time
@@ -80,6 +81,38 @@ class WeiboLib:
             print 'Something Wrong When Post',e
         finally:
             print 'Post End'
+
+    def PostWithPics(self, msg, pics):
+        try:
+            self.driver.get(self.post_url)
+            print 'Loading post page...'
+            btn_send = self.driver.find_element(By.XPATH,"//a[@data-node='send']")
+            if (btn_send != None):
+                print 'Ready to post'
+                text_content = self.driver.find_element(By.ID, "txt-publisher")
+                pic_upload = self.driver.find_element(By.CLASS_NAME, "picupload")
+                assert text_content, not None
+                print 'Send msg'
+                text_content.send_keys(msg)
+                if (pic_upload != None):
+                    for pic in pics:
+                        print 'Uploading path ',pic
+                        pic_upload.send_keys(pic)
+                else:
+                    print 'Pic btn not found'
+                time.sleep(30)
+                btn_send.click()
+                for i in xrange(300):
+                    if not u"发微博" in self.driver.title:
+                        break
+                    time.sleep(1)
+            else:
+                print 'Not logged in yet'
+        except Exception,e:
+            print 'Something Wrong When Post',e
+        finally:
+            print 'Post End'
+
 
 if __name__ == "__main__":
     user = "xxx@qq.com"
